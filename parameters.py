@@ -10,12 +10,13 @@ NUM_EPOCHS    = 1
 NUM_WORKERS   = 2
 IMAGE_SIZE    = 225
 
-# Dataset Parameters
+# Path Parameters
 TRAIN_IMG_DIR      = os.path.dirname(os.getcwd()) + "\\data\\training\\images\\"
 TRAIN_MASK_IMG_DIR = os.path.dirname(os.getcwd()) + "\\data\\training\\v2.0\\label\\"
 VAL_IMG_DIR        = os.path.dirname(os.getcwd()) + "\\data\\validation\\images\\"
 VAL_MASK_IMG_DIR   = os.path.dirname(os.getcwd()) + "\\data\\validation\\v2.0\\labels\\"
 
+SAVE_MODEL_DIR     = "saved models\\" 
 # Model
 IN_CHANNELS_COLORED  = 3
 OUT_CHANNELS_COLORED = 3 

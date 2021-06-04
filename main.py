@@ -36,6 +36,8 @@ validation_loader  = getDatasetLoader(
 )
 
 
-model = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_COLORED).to(DEVICE)
+model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_COLORED).to(DEVICE)
+loss_fun  = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters, lr= LEARNING_RATE)
 
-print(model)
+ 
