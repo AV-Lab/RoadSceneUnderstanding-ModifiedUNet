@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from parameters import *
+from models import *
 from utils import (
 	getAugmentationTransform,
 	getDatasetLoader, 
@@ -26,11 +27,15 @@ train_loader = getDatasetLoader(
 )
 
 validation_loader  = getDatasetLoader(
-	dir_data  = VAL_IMG_DIR,
-	dir_mask  = VALI_MASK_IMG_DIR,
-	transform = test_aug_transoform,
+	dir_data    = VAL_IMG_DIR,
+	dir_mask    = VAL_MASK_IMG_DIR,
+	transform   = test_aug_transoform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
 	shuffle     = False
 )
 
+
+model = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_COLORED).to(DEVICE)
+
+print(model)

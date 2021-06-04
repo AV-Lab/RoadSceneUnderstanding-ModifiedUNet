@@ -1,10 +1,12 @@
 from torch.utils.data import DataLoader
+from albumentations.pytorch import ToTensorV2
 from dataset import *
+from parameters import *
 
 import albumentations as Aug
 import torch
 
-def saveParameters(model, optimizer, path, epoch = None):
+def saveParameters(model, optimizer, name, epoch = None):
 	state = {
 		'epoch': epoch,
 		'state_dict': model.state_dict(),
@@ -14,10 +16,10 @@ def saveParameters(model, optimizer, path, epoch = None):
 		'opt_dict': optimizer.state_dict()
 	}
 
-	torch.save(state, path)
+	torch.save(state, SAVE_MODEL_DIR + name)
 
-def loadParameters(model, optimizer, path):
-	state = torch.load(path)
+def loadParameters(model, optimizer, name):
+	state = torch.load(SAVE_MODEL_DIR + name)
 
 	assert state is not None
 
@@ -36,7 +38,7 @@ def getAugmentationTransform(type):
 				std= [1.0, 1.0, 1.0],
 				max_pixel_value = 255.0
 				),
-			Aug.ToTensorV2()
+			ToTensorV2()
 		]) if type=='train' else Aug.Compose([
 			Aug.Resize(height=IMAGE_SIZE, width= IMAGE_SIZE),
 			Aug.Normalize(
@@ -44,7 +46,7 @@ def getAugmentationTransform(type):
 				std= [1.0, 1.0, 1.0],
 				max_pixel_value = 255.0
 				),
-			Aug.ToTensorV2()
+			ToTensorV2()
 		])
 
 def getDatasetLoader(dir_data, dir_mask, transform, batch_size, 
