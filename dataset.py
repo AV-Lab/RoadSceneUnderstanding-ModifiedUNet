@@ -1,7 +1,7 @@
 import os
 import cv2
-import numpy
-
+import numpy as np
+import torch
 from torch.utils.data import Dataset
 
 
@@ -18,19 +18,21 @@ class MapillaryDataset(Dataset):
 
 	def __getitem__(self, index):
 		img_path  = os.path.join(self.image_dir, self.images[index])
-		mask_path = os.path.join(self.mask_dir, self.images[index])
+		mask_path = os.path.join(self.mask_dir, self.images[index]).replace('jpg', 'png')
 
 		image = cv2.imread(img_path)
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		mask  = cv2.imread(mask_path)
-		mask  = cv2.cvtColor(mask. cv2.COLOR_BGR2RGB)
-
+		mask  = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
 		if self.transform is not None:
 			augmentation = self.transform(image = image, mask=mask)
 			image = augmentation['image']
 			mask  = augmentation['mask']
 
-		return image, mask
+		if torch.min(mask) < 0:
+			print(torch.min(mask))
+			print(mask)
+		return image, mask.unsqueeze(0)
 
 
 def test_backdir(dir_):

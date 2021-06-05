@@ -21,7 +21,7 @@ test_aug_transoform = getAugmentationTransform(type = 'test')
 # Dataset
 train_loader = getDatasetLoader(
 	dir_data    = TRAIN_IMG_DIR,
-	dir_mask    = TRAIN_MASK_IMG_DIR,
+	dir_mask    = TRAIN_MASK_VEHICLE_DIR,
 	transform   = train_aug_transform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
@@ -30,7 +30,7 @@ train_loader = getDatasetLoader(
 
 validation_loader  = getDatasetLoader(
 	dir_data    = VAL_IMG_DIR,
-	dir_mask    = VAL_MASK_IMG_DIR,
+	dir_mask    = VAL_MASK_VEHICLE_DIR,
 	transform   = test_aug_transoform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
@@ -38,8 +38,8 @@ validation_loader  = getDatasetLoader(
 )
 
 # Model Setup
-model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_COLORED).to(DEVICE)
-loss_fun  = nn.CrossEntropyLoss()
+model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_GRAY).cuda()
+loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
@@ -48,8 +48,8 @@ for epoch in range(NUM_EPOCHS):
 	loop = tqdm(train_loader)
 
 	for batch_idx, (data, target) in enumerate(loop):
-		data, target = data.to(DEVICE), target.to(DEVICE)
 
+		data, target = data.cuda(), target.float().cuda()
 
 		# Forward
 		with torch.cuda.amp.autocast():
@@ -57,26 +57,36 @@ for epoch in range(NUM_EPOCHS):
 			loss = loss_fun(pred, target)
 
 		# Backward
-		optimizer.zerograd()
+		optimizer.zero_grad()
 		scalar.scale(loss).backward()
-		scale.step(optimizer)
-		scale.update()
+		scalar.step(optimizer)
+		scalar.update()
 
 		loop.set_postfix(loss=loss.item())
 	
 	# Validation
 	num_correct = 0
 	num_pixels  = 0
-
+	dice_score  = 0
+	prev        = np.inf
 	model.eval()
 
 	with torch.no_grad():
 		for data, target in validation_loader:
-			data, target = data.to(DEVICE), target.to(DEVICE)
-			preds = model(data)
-			print('target', target[0])
-			print('preds', preds[0])
-			plt.subplot(2,1,1)
-			plt.imshow(target[0])
-			plt.subplot(2,1,1)
-			plt.imshow(preds[0])
+			data, target = data.cuda(), target.float().cuda()
+			
+			preds = torch.sigmoid(model(data))
+			preds[preds >= 0.5] = 1.0
+
+			num_correct += (preds == target).sum()
+			num_pixels  += torch.numel(preds)
+			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum + 1e-8)
+
+
+	print(f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}")
+	print(f"Dice score: {dice_score/len(validation_loader)}")
+
+	if prev > (num_correct/num_pixels*100):
+		saveParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
+
+	model.train()
