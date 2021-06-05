@@ -80,8 +80,3 @@ for epoch in range(NUM_EPOCHS):
 			plt.imshow(target[0])
 			plt.subplot(2,1,1)
 			plt.imshow(preds[0])
-
-			
-
-if __name__ == "__main__":
-    main()
