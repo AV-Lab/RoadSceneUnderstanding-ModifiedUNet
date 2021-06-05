@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
+import numpy as np 
 
 from tqdm import tqdm
 from parameters import *
@@ -43,14 +44,14 @@ loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
+model, optimizer = loadParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
 
 for epoch in range(NUM_EPOCHS):
-	loop = tqdm(train_loader)
+	loop = tqdm(train_loader, leave = False)
 
 	for batch_idx, (data, target) in enumerate(loop):
 
 		data, target = data.cuda(), target.float().cuda()
-
 		# Forward
 		with torch.cuda.amp.autocast():
 			pred = model(data)
@@ -68,25 +69,25 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = np.inf
+	prev        = 0
 	model.eval()
 
 	with torch.no_grad():
 		for data, target in validation_loader:
-			data, target = data.cuda(), target.float().cuda()
-			
+			data, target = data.float().cuda(), target.float().cuda()
 			preds = torch.sigmoid(model(data))
 			preds[preds >= 0.5] = 1.0
 
 			num_correct += (preds == target).sum()
 			num_pixels  += torch.numel(preds)
-			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum + 1e-8)
+			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
 
 
 	print(f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}")
 	print(f"Dice score: {dice_score/len(validation_loader)}")
 
-	if prev > (num_correct/num_pixels*100):
+	if prev < dice_score:
 		saveParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
+		prev = dice_score
 
 	model.train()

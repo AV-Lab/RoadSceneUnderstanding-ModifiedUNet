@@ -3,12 +3,12 @@ import os
 
 
 # Model Parameters
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 0.00001
 DEVICE        = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE    = 16
-NUM_EPOCHS    = 1
-NUM_WORKERS   = 1
-IMAGE_SIZE    = 225
+NUM_EPOCHS    = 50
+NUM_WORKERS   = 2
+IMAGE_SIZE    = 320
 
 # Path Parameters
 TRAIN_IMG_DIR      		= os.path.dirname(os.getcwd()) + "/data/training/images/"

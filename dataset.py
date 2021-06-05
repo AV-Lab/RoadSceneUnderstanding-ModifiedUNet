@@ -18,20 +18,20 @@ class MapillaryDataset(Dataset):
 
 	def __getitem__(self, index):
 		img_path  = os.path.join(self.image_dir, self.images[index])
-		mask_path = os.path.join(self.mask_dir, self.images[index]).replace('jpg', 'png')
+		mask_path = os.path.join(self.mask_dir, self.images[index]).replace('.jpg', '.png')
 
 		image = cv2.imread(img_path)
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-		mask  = cv2.imread(mask_path)
-		mask  = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
+		mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+		mask  = mask/ 255.
+
 		if self.transform is not None:
 			augmentation = self.transform(image = image, mask=mask)
 			image = augmentation['image']
 			mask  = augmentation['mask']
 
-		if torch.min(mask) < 0:
-			print(torch.min(mask))
-			print(mask)
+		
 		return image, mask.unsqueeze(0)
 
 
