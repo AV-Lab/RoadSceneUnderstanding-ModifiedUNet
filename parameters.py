@@ -7,7 +7,7 @@ LEARNING_RATE = 1e-4
 DEVICE        = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE    = 16
 NUM_EPOCHS    = 1
-NUM_WORKERS   = 2
+NUM_WORKERS   = 1
 IMAGE_SIZE    = 225
 
 # Path Parameters
