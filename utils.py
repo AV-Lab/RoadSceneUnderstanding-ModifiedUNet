@@ -24,9 +24,11 @@ def loadParameters(model, optimizer, name):
 	assert state is not None
 
 	model.load_state_dict(state['state_dict'])
-	optimizer.load_state_dict(state['opt_dict'])
+	if optimizer is not None:
+		optimizer.load_state_dict(state['opt_dict'])
 
-	return model, optimizer
+		return model, optimizer
+	return model
 
 def getAugmentationTransform(type):
 	return Aug.Compose([

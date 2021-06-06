@@ -69,7 +69,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = 0
+	prev        = 0.07
 	model.eval()
 
 	with torch.no_grad():
