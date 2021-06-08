@@ -59,13 +59,3 @@ class MapillaryDataset(Dataset):
 
 			return image, mask_channel
 
-def test_backdir(dir_):
-	target = os.listdir(dir_)[0]
-	img_path = os.path.join(dir_, target)
-	print(img_path)
-	img = cv2.imread(img_path)
-
-	cv2.imshow('t',img)
-	cv2.waitKey()
-
-#test_backdir(os.path.dirname(os.getcwd()) + "\\data\\training\\images")
