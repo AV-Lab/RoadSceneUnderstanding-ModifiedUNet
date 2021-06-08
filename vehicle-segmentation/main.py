@@ -45,7 +45,6 @@ loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model = model, optimizer = optimizer, name= SAVE_MODEL_DIR)
 
 for epoch in range(NUM_EPOCHS):
 	loop = tqdm(train_loader, leave = False)
@@ -70,17 +69,20 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = 0.07
+	prev        = 0
 	model.eval()
 
 	with torch.no_grad():
-		for data, target in validation_loader:
+		looper = tqdm(validation_loader, leave=False)
+		for data, target in looper:
 			data, target = data.float().cuda(), target.float().cuda()
-			preds = torch.sigmoid(model(data))
-			preds[preds >= 0.5] = 1.0
+			preds = torch.softmax(model(data), dim=3)
 
-			num_correct += (preds == target).sum()
-			num_pixels  += torch.numel(preds)
+			# Assign class for each pixel
+			num_correct += (preds.argmax(dim= 3) == target.argmax(dim=3)).sum()
+			num_pixels  += torch.numel(preds[:,:,0])
+			tp = (preds * target).sum()
+
 			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
 
 
@@ -88,7 +90,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"Dice score: {dice_score/len(validation_loader)}")
 
 	if prev < dice_score:
-		saveParameters(model = model, optimizer = optimizer, name= UNET_MODEL)
+		saveParameters(model = model, optimizer = optimizer, name= SAVE_MODEL_DIR)
 		prev = dice_score
 
 	model.train()

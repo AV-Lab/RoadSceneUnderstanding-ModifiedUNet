@@ -51,3 +51,10 @@ class MapillaryDataset(Dataset):
 
 			return image, mask_channel
 
+import torch
+
+img = torch.from_numpy(np.array([np.array([[1,2,3],[4,3,7],[10,23,423]]),
+					np.array([[23, 23,122],[232,423,12],[2323,43,32]])]).astype(np.float32))
+print(img.size())
+print(torch.softmax(img, dim=2))
+print(torch.softmax(img, dim=2).argmax(dim=2))
