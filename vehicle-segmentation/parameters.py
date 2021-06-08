@@ -36,16 +36,13 @@ SAVE_VIDEO_DIR     = "output videos/"
 SAVE_IMAGE_DIR     = "output images/"
 
 # Model
-IN_CHANNELS_COLORED  = 3
-OUT_CHANNELS_COLORED = 3 
-IN_CHANNELS_GRAY  = 1
-OUT_CHANNELS_GRAY = 1
-
+COLOR_CHANNEL = 3
+GRAY_CHANNEL  = 1
+N_CLASSES     = 4
 
 # Saved Models
 
-UNET_MODEL = "unet_vehicle"
-UNET_MODEL_PRETRAINED = "unet_vehicle_pretrained"
+UNET_MODEL_SAVE_DIR = "unet-streetinfo"
 
 # Colors
 SIDEWALK_COLOR   = [244, 35, 232]

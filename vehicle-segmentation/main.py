@@ -22,7 +22,7 @@ test_aug_transoform = getAugmentationTransform(type = 'test')
 # Dataset
 train_loader = getDatasetLoader(
 	dir_data    = TRAIN_IMG_DIR,
-	dir_mask    = TRAIN_MASK_VEHICLE_DIR,
+	dir_mask    = [TRAIN_MASK_BOUNDARY_DIR, TRAIN_MASK_LANELINE_DIR, TRAIN_MASK_SIDEWALK_DIR, TRAIN_MASK_ROAD_DIR],
 	transform   = train_aug_transform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
@@ -31,7 +31,7 @@ train_loader = getDatasetLoader(
 
 validation_loader  = getDatasetLoader(
 	dir_data    = VAL_IMG_DIR,
-	dir_mask    = VAL_MASK_VEHICLE_DIR,
+	dir_mask    = [VAL_MASK_BOUNDARY_DIR, VAL_MASK_LANELINE_DIR, VAL_MASK_SIDEWALK_DIR, VAL_MASK_ROAD_DIR],
 	transform   = test_aug_transoform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
@@ -39,12 +39,12 @@ validation_loader  = getDatasetLoader(
 )
 
 # Model Setup
-model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_GRAY).cuda()
+model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
 loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
+model, optimizer = loadParameters(model = model, optimizer = optimizer, name= SAVE_MODEL_DIR)
 
 for epoch in range(NUM_EPOCHS):
 	loop = tqdm(train_loader, leave = False)
