@@ -39,12 +39,11 @@ validation_loader  = getDatasetLoader(
 )
 
 # Model Setup
-model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_GRAY).cuda()
+model     = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels = 3, out_channels = 1, init_features= 32, pretrained=True).cuda()
 loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
 
 for epoch in range(NUM_EPOCHS):
 	loop = tqdm(train_loader, leave = False)
@@ -69,7 +68,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = 0.07
+	prev        = 0
 	model.eval()
 
 	with torch.no_grad():
@@ -87,7 +86,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"Dice score: {dice_score/len(validation_loader)}")
 
 	if prev < dice_score:
-		saveParameters(model = model, optimizer = optimizer, name= UNET_MODEL)
+		saveParameters(model = model, optimizer = optimizer, name= UNET_MODEL_PRETRAINED)
 		prev = dice_score
 
 	model.train()

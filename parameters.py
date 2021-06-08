@@ -17,10 +17,21 @@ TRAIN_MASK_VEHICLE_DIR 	= os.path.dirname(os.getcwd()) + "/data/training/v2.0/la
 VAL_IMG_DIR        		= os.path.dirname(os.getcwd()) + "/data/validation/images/"
 VAL_MASK_IMG_DIR 		= os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels/"
 VAL_MASK_VEHICLE_DIR    = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_vehicle/"
+VIDEO_DIR 				= "input videos/"
 
+# Save Path
 SAVE_MODEL_DIR     = "saved models/" 
+SAVE_VIDEO_DIR     = "output videos/"
+SAVE_IMAGE_DIR     = "output images/"
+
 # Model
 IN_CHANNELS_COLORED  = 3
 OUT_CHANNELS_COLORED = 3 
 IN_CHANNELS_GRAY  = 1
 OUT_CHANNELS_GRAY = 1
+
+
+# Saved Models
+
+UNET_MODEL = "unet_vehicle"
+UNET_MODEL_PRETRAINED = "unet_vehicle_pretrained"
