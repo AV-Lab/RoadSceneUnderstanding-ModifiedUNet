@@ -68,4 +68,4 @@ def test_backdir(dir_):
 	cv2.imshow('t',img)
 	cv2.waitKey()
 
-test_backdir(os.path.dirname(os.getcwd()) + "\\data\\training\\images")
+#test_backdir(os.path.dirname(os.getcwd()) + "\\data\\training\\images")
