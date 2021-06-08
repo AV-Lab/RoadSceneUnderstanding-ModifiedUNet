@@ -38,6 +38,7 @@ validation_loader  = getDatasetLoader(
 	shuffle     = False
 )
 
+
 # Model Setup
 model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
 loss_fun  = nn.BCEWithLogitsLoss()
