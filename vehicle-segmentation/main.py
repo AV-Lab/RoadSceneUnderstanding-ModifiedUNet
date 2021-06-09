@@ -45,8 +45,10 @@ loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
+model, optimizer = loadParameters(model, optimizer, name= "side_walk")
 
 for epoch in range(NUM_EPOCHS):
+
 	loop = tqdm(train_loader, leave = False)
 
 	for batch_idx, (data, target) in enumerate(loop):
@@ -55,7 +57,7 @@ for epoch in range(NUM_EPOCHS):
 		# Forward
 		with torch.cuda.amp.autocast():
 			pred = model(data)
-			loss = loss_fun(pred, target)
+			loss = loss_fun(pred, target.permute(0, 3, 1, 2))
 
 		# Backward
 		optimizer.zero_grad()
@@ -64,23 +66,24 @@ for epoch in range(NUM_EPOCHS):
 		scalar.update()
 
 		loop.set_postfix(loss=loss.item())
-	
+
 	# Validation
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = 0
+	prev        = 0.2930256128311157
 	model.eval()
 
 	with torch.no_grad():
 		looper = tqdm(validation_loader, leave=False)
 		for data, target in looper:
 			data, target = data.float().cuda(), target.float().cuda()
-			preds = torch.softmax(model(data), dim=3)
+			preds  = torch.softmax(model(data), dim=1)
+			target = target.permute(0, 3, 1, 2)
 
 			# Assign class for each pixel
-			num_correct += (preds.argmax(dim= 3) == target.argmax(dim=3)).sum()
-			num_pixels  += torch.numel(preds[:,:,0])
+			num_correct += (preds.argmax(dim= 1) == target.argmax(dim=1)).sum()
+			num_pixels  += torch.numel(preds)
 			tp = (preds * target).sum()
 
 			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
@@ -90,7 +93,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"Dice score: {dice_score/len(validation_loader)}")
 
 	if prev < dice_score:
-		saveParameters(model = model, optimizer = optimizer, name= SAVE_MODEL_DIR)
+		saveParameters(model = model, optimizer = optimizer, name= "side_walk")
 		prev = dice_score
 
 	model.train()
