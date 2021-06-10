@@ -37,8 +37,6 @@ validation_loader  = getDatasetLoader(
 	num_workers = NUM_WORKERS,
 	shuffle     = False
 )
-
-
 # Model Setup
 model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
 loss_fun  = nn.CrossEntropyLoss()
@@ -53,11 +51,11 @@ for epoch in range(NUM_EPOCHS):
 
 	for batch_idx, (data, target) in enumerate(loop):
 
-		data, target = data.cuda(), target.float().cuda()
+		data, target = data.cuda(), target.long().cuda()
 		# Forward
 		with torch.cuda.amp.autocast():
 			pred = model(data)
-			loss = loss_fun(pred, target.permute(0, 3, 1, 2))
+			loss = loss_fun(pred, target)
 
 		# Backward
 		optimizer.zero_grad()
@@ -71,7 +69,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        =  0.3282238841056824
+	prev        =  0
 	model.eval()
 
 	with torch.no_grad():
@@ -97,3 +95,4 @@ for epoch in range(NUM_EPOCHS):
 		prev = dice_score
 
 	model.train()
+	
