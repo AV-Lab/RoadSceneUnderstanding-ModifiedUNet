@@ -90,7 +90,7 @@ def doVideo(path, output):
 	white_clip = clip1.fl_image(doSegmentation) 
 	white_clip.write_videofile(white_output, audio=False)
 
-
+'''
 # Load Model
 model = loadModel()
 
@@ -124,7 +124,7 @@ plt.imshow(output_channel[:,:,3], cmap='gray')
 plt.subplot(1,5,5)
 plt.imshow(label)
 plt.show()
-
+'''
 '''
 # Load Model
 globalModel()
