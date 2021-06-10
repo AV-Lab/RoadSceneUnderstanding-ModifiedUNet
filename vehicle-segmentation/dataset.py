@@ -43,7 +43,9 @@ class MapillaryDataset(Dataset):
 				mask = mask.reshape((mask.shape[0], mask.shape[1], 1)) # Add gray channel
 				# Combination
 				mask_channel = mask if mask_channel is None else np.concatenate((mask_channel, mask), axis = 2)
-
+			print(mask_channel.shape)
+			mask_channel = np.concatenate((np.zeros((image.shape[0], image.shape[1], 1)), mask), axis = 2)
+			print(mask_channel.shape)
 			if self.transform is not None:
 				augmentation = self.transform(image= image, mask=mask_channel)
 				mask_channel = augmentation['mask']

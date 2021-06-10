@@ -51,9 +51,9 @@ def doSegmentation(image):
 
 
 def loadModel():
-	model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_GRAY)
+	model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
 
-	model = loadParameters(model = model, optimizer = None, name= 'unet_vehicle')
+	model = loadParameters(model = model, optimizer = None, name= 'side_walk')
 
 	return model.cuda()
 
@@ -90,7 +90,7 @@ def doVideo(path, output):
 	white_clip = clip1.fl_image(doSegmentation) 
 	white_clip.write_videofile(white_output, audio=False)
 
-'''
+
 # Load Model
 model = loadModel()
 
@@ -98,19 +98,32 @@ model = loadModel()
 
 img_path_list = os.listdir(VAL_IMG_DIR)
 
-image_path = VAL_IMG_DIR + img_path_list[840]
+image_path = VAL_IMG_DIR + img_path_list[19]
 
-image, width, height = readImage(image_path).unsqueeze(0)
+image, width, height = readImage(image_path)
+label= cv2.imread(VAL_MASK_IMG_DIR + img_path_list[19].replace('.jpg','.png'))
+label = cv2.cvtColor(label, cv2.COLOR_BGR2RGB)
 # Prediction
 
-pred = model(image).squeeze(0).squeeze(0)
+pred = torch.softmax(model(image.unsqueeze(0).float().cuda()), dim=1).squeeze(0).permute(1,2,0)
+output_channel = pred.detach().cpu().numpy()
+print(pred.argmax(dim=2))
 
-mask = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 3))
-mask[:,:, 2][pred >= 0.5] = 255.0
-
-addMask(mask = mask, image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB), size=[width, height] )
-
-'''
+out = np.zeros(output_channel.shape)
+print(label)
+out[:,:,output_channel.argmax(axis=2)] = 255.
+print(image.permute(1,2,0).detach().cpu().numpy().shape)
+plt.subplot(1,5,1)
+plt.imshow(output_channel[:,:,0], cmap='gray')
+plt.subplot(1,5,2)
+plt.imshow(output_channel[:,:,1], cmap='gray')
+plt.subplot(1,5,3)
+plt.imshow(output_channel[:,:,2], cmap='gray')
+plt.subplot(1,5,4)
+plt.imshow(output_channel[:,:,3], cmap='gray')
+plt.subplot(1,5,5)
+plt.imshow(label)
+plt.show()
 
 '''
 # Load Model
@@ -131,7 +144,9 @@ out = doSegmentation(image = image)
 cv2.imwrite('t.png',out)
 
 '''
+'''
 globalModel()
 
 doVideo(path='test.mp4', output='test_out.mp4')
 
+'''

@@ -41,11 +41,11 @@ validation_loader  = getDatasetLoader(
 
 # Model Setup
 model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
-loss_fun  = nn.BCEWithLogitsLoss()
+loss_fun  = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model, optimizer, name= "side_walk")
+#model, optimizer = loadParameters(model, optimizer, name= "side_walk")
 
 for epoch in range(NUM_EPOCHS):
 
@@ -71,7 +71,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	dice_score  = 0
-	prev        = 0.2930256128311157
+	prev        =  0.3282238841056824
 	model.eval()
 
 	with torch.no_grad():
@@ -93,7 +93,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"Dice score: {dice_score/len(validation_loader)}")
 
 	if prev < dice_score:
-		saveParameters(model = model, optimizer = optimizer, name= "side_walk")
+		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg")
 		prev = dice_score
 
 	model.train()
