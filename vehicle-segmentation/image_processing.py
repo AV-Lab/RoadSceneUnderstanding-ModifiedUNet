@@ -99,3 +99,4 @@ pointlineExtractor(source= VAL_MASK_IMG_DIR, dist = VAL_MASK_LANEPOINT_DIR)
 
 boundaryExtractor(source= TRAIN_MASK_IMG_DIR, dist = TRAIN_MASK_BOUNDARY_DIR)
 boundaryExtractor(source= VAL_MASK_IMG_DIR, dist = VAL_MASK_BOUNDARY_DIR)
+

@@ -69,7 +69,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	loss_total  = 0
-	prev        =  np.inf
+	prev        = 0.17611709237098694
 	model.eval()
 
 	with torch.no_grad():
@@ -97,4 +97,4 @@ for epoch in range(NUM_EPOCHS):
 		prev = loss_total/len(validation_loader)
 
 	model.train()
-	
+
