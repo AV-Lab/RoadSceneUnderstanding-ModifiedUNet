@@ -43,7 +43,7 @@ loss_fun  = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model, optimizer, name= "side_walk_bg")
+#model, optimizer = loadParameters(model, optimizer, name= "side_walk_bg")
 
 for epoch in range(NUM_EPOCHS):
 
@@ -69,7 +69,7 @@ for epoch in range(NUM_EPOCHS):
 	num_correct = 0
 	num_pixels  = 0
 	loss_total  = 0
-	prev        = 0.17611709237098694
+	prev        = np.inf
 	model.eval()
 
 	with torch.no_grad():
@@ -93,7 +93,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"loss {loss_total/len(validation_loader)}")
 
 	if prev > loss_total/len(validation_loader):
-		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg")
+		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg_3d")
 		prev = loss_total/len(validation_loader)
 
 	model.train()
