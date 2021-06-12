@@ -56,8 +56,7 @@ def getDatasetLoader(dir_data, dir_mask, transform, batch_size,
 	dataset = MapillaryDataset(
 		image_dir = dir_data, 
 		mask_dir  = dir_mask , 
-		transform = transform,
-		multiple_classes = True
+		transform = transform
 	)
 
 	dataloader = DataLoader(

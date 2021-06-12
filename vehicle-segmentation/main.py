@@ -22,7 +22,7 @@ test_aug_transoform = getAugmentationTransform(type = 'test')
 # Dataset
 train_loader = getDatasetLoader(
 	dir_data    = TRAIN_IMG_DIR,
-	dir_mask    = [TRAIN_MASK_BOUNDARY_DIR, TRAIN_MASK_LANELINE_DIR, TRAIN_MASK_SIDEWALK_DIR, TRAIN_MASK_ROAD_DIR],
+	dir_mask    = TRAIN_MASK_VEHICLE_DIR,
 	transform   = train_aug_transform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
@@ -31,27 +31,27 @@ train_loader = getDatasetLoader(
 
 validation_loader  = getDatasetLoader(
 	dir_data    = VAL_IMG_DIR,
-	dir_mask    = [VAL_MASK_BOUNDARY_DIR, VAL_MASK_LANELINE_DIR, VAL_MASK_SIDEWALK_DIR, VAL_MASK_ROAD_DIR],
+	dir_mask    = VAL_MASK_VEHICLE_DIR,
 	transform   = test_aug_transoform,
 	batch_size  = BATCH_SIZE,
 	num_workers = NUM_WORKERS,
 	shuffle     = False
 )
+
 # Model Setup
-model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
-loss_fun  = nn.CrossEntropyLoss()
+model     = UNET(in_channels= IN_CHANNELS_COLORED, out_channels= OUT_CHANNELS_GRAY).cuda()
+loss_fun  = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model, optimizer, name= "side_walk_bg")
+model, optimizer = loadParameters(model = model, optimizer = optimizer, name= 'unet_vehicle')
 
 for epoch in range(NUM_EPOCHS):
-
 	loop = tqdm(train_loader, leave = False)
 
 	for batch_idx, (data, target) in enumerate(loop):
 
-		data, target = data.cuda(), target.long().cuda()
+		data, target = data.cuda(), target.float().cuda()
 		# Forward
 		with torch.cuda.amp.autocast():
 			pred = model(data)
@@ -64,37 +64,30 @@ for epoch in range(NUM_EPOCHS):
 		scalar.update()
 
 		loop.set_postfix(loss=loss.item())
-
+	
 	# Validation
 	num_correct = 0
 	num_pixels  = 0
-	loss_total  = 0
-	prev        = 0.17611709237098694
+	dice_score  = 0
+	prev        = 0.07
 	model.eval()
 
 	with torch.no_grad():
-		looper = tqdm(validation_loader, leave=False)
-		for data, target in looper:
-			data, target = data.float().cuda(), target.long().cuda()
-			preds  = model(data)
-			loss_total += loss_fun(preds, target)
-			preds  = torch.softmax(preds, dim=1)
-			preds  = torch.argmax(preds, dim = 1)
+		for data, target in validation_loader:
+			data, target = data.float().cuda(), target.float().cuda()
+			preds = torch.sigmoid(model(data))
+			preds[preds >= 0.5] = 1.0
 
-
-			# Assign class for each pixel
 			num_correct += (preds == target).sum()
 			num_pixels  += torch.numel(preds)
-
-			#dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
+			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
 
 
 	print(f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}")
-	print(f"loss {loss_total/len(validation_loader)}")
+	print(f"Dice score: {dice_score/len(validation_loader)}")
 
-	if prev > loss_total/len(validation_loader):
-		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg")
-		prev = loss_total/len(validation_loader)
+	if prev < dice_score:
+		saveParameters(model = model, optimizer = optimizer, name= UNET_MODEL)
+		prev = dice_score
 
 	model.train()
-
