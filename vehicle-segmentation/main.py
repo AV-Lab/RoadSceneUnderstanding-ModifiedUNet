@@ -37,15 +37,13 @@ validation_loader  = getDatasetLoader(
 	num_workers = NUM_WORKERS,
 	shuffle     = False
 )
-
-
 # Model Setup
 model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES).cuda()
-loss_fun  = nn.BCEWithLogitsLoss()
+loss_fun  = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model, optimizer, name= "side_walk")
+model, optimizer = loadParameters(model, optimizer, name= "side_walk_bg")
 
 for epoch in range(NUM_EPOCHS):
 
@@ -53,11 +51,11 @@ for epoch in range(NUM_EPOCHS):
 
 	for batch_idx, (data, target) in enumerate(loop):
 
-		data, target = data.cuda(), target.float().cuda()
+		data, target = data.cuda(), target.long().cuda()
 		# Forward
 		with torch.cuda.amp.autocast():
 			pred = model(data)
-			loss = loss_fun(pred, target.permute(0, 3, 1, 2))
+			loss = loss_fun(pred, target)
 
 		# Backward
 		optimizer.zero_grad()
@@ -70,30 +68,33 @@ for epoch in range(NUM_EPOCHS):
 	# Validation
 	num_correct = 0
 	num_pixels  = 0
-	dice_score  = 0
-	prev        = 0.2930256128311157
+	loss_total  = 0
+	prev        = 0.17611709237098694
 	model.eval()
 
 	with torch.no_grad():
 		looper = tqdm(validation_loader, leave=False)
 		for data, target in looper:
-			data, target = data.float().cuda(), target.float().cuda()
-			preds  = torch.softmax(model(data), dim=1)
-			target = target.permute(0, 3, 1, 2)
+			data, target = data.float().cuda(), target.long().cuda()
+			preds  = model(data)
+			loss_total += loss_fun(preds, target)
+			preds  = torch.softmax(preds, dim=1)
+			preds  = torch.argmax(preds, dim = 1)
+
 
 			# Assign class for each pixel
-			num_correct += (preds.argmax(dim= 1) == target.argmax(dim=1)).sum()
+			num_correct += (preds == target).sum()
 			num_pixels  += torch.numel(preds)
-			tp = (preds * target).sum()
 
-			dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
+			#dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
 
 
 	print(f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}")
-	print(f"Dice score: {dice_score/len(validation_loader)}")
+	print(f"loss {loss_total/len(validation_loader)}")
 
-	if prev < dice_score:
-		saveParameters(model = model, optimizer = optimizer, name= "side_walk")
-		prev = dice_score
+	if prev > loss_total/len(validation_loader):
+		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg")
+		prev = loss_total/len(validation_loader)
 
 	model.train()
+

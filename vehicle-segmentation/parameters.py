@@ -38,7 +38,7 @@ SAVE_IMAGE_DIR     = "output images/"
 # Model
 COLOR_CHANNEL = 3
 GRAY_CHANNEL  = 1
-N_CLASSES     = 4
+N_CLASSES     = 5
 
 # Saved Models
 
@@ -47,6 +47,5 @@ UNET_MODEL_SAVE_DIR = "unet-streetinfo"
 # Colors
 SIDEWALK_COLOR   = [244, 35, 232]
 LANELINE_COLOR   = [255, 255, 255]
-POINTSLINE_COLOR = [128, 128, 128]
 BOUNDARY_COLOR   = [196, 196, 196]
 ROAD_COLOR       = [128, 64, 128]

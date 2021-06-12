@@ -34,19 +34,17 @@ class MapillaryDataset(Dataset):
 
 			return image, mask.unsqueeze(0)
 		else:
-			mask_channel = None
-			for mask_path in self.mask_dir:
+			output_mask = np.zeros((image.shape[0], image.shape[1]))
+			for idx, mask_path in enumerate(self.mask_dir):
 				mask_path_item = os.path.join(mask_path, self.images[index]).replace('.jpg', '.png')
 				mask = cv2.imread(mask_path_item, cv2.IMREAD_GRAYSCALE)
 				# Process
-				mask = mask / 255. # binary image
-				mask = mask.reshape((mask.shape[0], mask.shape[1], 1)) # Add gray channel
-				# Combination
-				mask_channel = mask if mask_channel is None else np.concatenate((mask_channel, mask), axis = 2)
+				output_mask[mask > 0] = idx + 1
 
 			if self.transform is not None:
-				augmentation = self.transform(image= image, mask=mask_channel)
-				mask_channel = augmentation['mask']
+				augmentation = self.transform(image= image, mask=output_mask)
+				output_mask = augmentation['mask']
 				image = augmentation['image']
 
-			return image, mask_channel
+			return image, output_mask
+
