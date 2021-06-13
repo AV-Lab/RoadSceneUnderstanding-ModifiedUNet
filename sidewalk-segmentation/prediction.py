@@ -38,14 +38,26 @@ def doSegmentation(image):
 		# Prepare Image
 		pre_image = transform_out['image'].unsqueeze(0).cuda()
 
-		pred = model(pre_image).squeeze(0).squeeze(0).detach().cpu()
+		preds = model(pre_image)
+		preds = torch.softmax(preds, dim=1)
+		preds = torch.argmax(preds, dim=1).squeeze(0).detach().cpu().numpy()
 
-	mask = np.zeros((IMAGE_SIZE, IMAGE_SIZE, 3))
-	mask[:,:, 0][pred >= 0.5] = 255.0
+	# Mask formulation
+	side_walk_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	curb_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	road_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	laneline_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	# Assign values
+	side_walk_mask[preds == 3] = [255, 255, 0]
+	curb_mask[preds == 1] = [255, 0, 0]
+	road_mask[preds == 4] = [0, 0, 255]
+	laneline_mask[preds == 2] = [0, 255, 0]
+
+	mask = side_walk_mask + curb_mask + road_mask + laneline_mask
 
 	dtransform_out = dtransform(image = mask)
 
-	out = cv2.addWeighted(image,1,dtransform_out['image'].astype('uint8'),0.7, 0, dtype=cv2.CV_64F)
+	out = cv2.addWeighted(image,1,dtransform_out['image'],0.4, 0, dtype=cv2.CV_64F)
 	return cv2.cvtColor(out.astype('uint8'), cv2.COLOR_RGB2BGR)
 
 
@@ -53,7 +65,7 @@ def doSegmentation(image):
 def loadModel():
 	model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
 
-	model = loadParameters(model = model, optimizer = None, name= 'side_walk')
+	model = loadParameters(model = model, optimizer = None, name= 'side_walk_bg')
 
 	return model.cuda()
 
@@ -73,14 +85,16 @@ def readImage(path):
 
 	return out['image'], image.shape[0], image.shape[1]
 
-def addMask(image, mask, size):
-	transform = Aug.Compose([Aug.Resize(height=IMAGE_SIZE*2, width= IMAGE_SIZE *2)])
+def addMask(image, mask, width, height):
+	transform = Aug.Compose([Aug.Resize(height=height, width= width)])
 	out = transform(image= image, mask= mask)
 
-	
-	image_out =  cv2.addWeighted(out['image'].astype(np.uint8),1,out['mask'].astype(np.uint8),0.7, 0)
-	cv2.imshow('combined.png', image_out)
-	cv2.waitKey()
+	print(out['image'].shape)
+	print(out['mask'].shape)
+	image_out =  cv2.addWeighted(out['image'],1,out['mask'],0.4, 0,dtype=cv2.CV_64F)
+	print(out['mask'])
+	plt.imshow(image_out)
+	plt.show()
 
 
 def doVideo(path, output):
@@ -89,8 +103,8 @@ def doVideo(path, output):
 	clip1 = VideoFileClip(path)
 	white_clip = clip1.fl_image(doSegmentation) 
 	white_clip.write_videofile(white_output, audio=False)
-
 '''
+
 # Load Model
 model = loadModel()
 
@@ -98,14 +112,35 @@ model = loadModel()
 
 img_path_list = os.listdir(VAL_IMG_DIR)
 
-image_path = VAL_IMG_DIR + img_path_list[19]
-
+image_path = VAL_IMG_DIR + img_path_list[1450]
+print(image_path)
 image, width, height = readImage(image_path)
-label= cv2.imread(VAL_MASK_IMG_DIR + img_path_list[19].replace('.jpg','.png'))
-label = cv2.cvtColor(label, cv2.COLOR_BGR2RGB)
+#label= cv2.imread(VAL_MASK_IMG_DIR + img_path_list[19].replace('.jpg','.png'))
+#label = cv2.cvtColor(label, cv2.COLOR_BGR2RGB)
 # Prediction
 
-pred = torch.softmax(model(image.unsqueeze(0).float().cuda()), dim=1).squeeze(0).permute(1,2,0)
+preds  = model(image.unsqueeze(0).float().cuda())
+print(preds.shape)
+preds  = torch.softmax(preds, dim=1)
+preds  = torch.argmax(preds, dim = 1).squeeze(0).detach().cpu().numpy()
+
+# Mask formulation
+side_walk_mask = np.zeros((image.shape[1], image.shape[2], 3))
+curb_mask      = np.zeros((image.shape[1], image.shape[2], 3))
+road_mask      = np.zeros((image.shape[1], image.shape[2], 3))
+laneline_mask  = np.zeros((image.shape[1], image.shape[2], 3))
+print(preds)
+# Assign values
+side_walk_mask[preds == 3] 	=  [255,255,0]
+curb_mask[preds == 1] 		= [255,0,0]
+road_mask[preds == 4] 		= [0,0,255]
+laneline_mask[preds == 2] 	= [0, 255, 0]
+
+mask = side_walk_mask + curb_mask + road_mask + laneline_mask
+
+addMask(image = image.permute(1,2,0).numpy(), mask = mask, width=height, height= width)
+'''
+'''
 output_channel = pred.detach().cpu().numpy()
 print(pred.argmax(dim=2))
 
@@ -144,9 +179,8 @@ out = doSegmentation(image = image)
 cv2.imwrite('t.png',out)
 
 '''
-'''
+
 globalModel()
 
-doVideo(path='test.mp4', output='test_out.mp4')
+doVideo(path=VIDEO_DIR+ 'test.mp4', output= SAVE_VIDEO_DIR +'test_out_2.mp4')
 
-'''
