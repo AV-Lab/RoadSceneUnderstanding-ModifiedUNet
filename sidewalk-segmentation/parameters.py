@@ -38,7 +38,7 @@ SAVE_IMAGE_DIR     = "output images/"
 # Model
 COLOR_CHANNEL = 3
 GRAY_CHANNEL  = 1
-N_CLASSES     = 5
+N_CLASSES     = 3
 
 # Saved Models
 
