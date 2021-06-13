@@ -43,7 +43,7 @@ loss_fun  = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-model, optimizer = loadParameters(model, optimizer, name= "side_walk_bg")
+#model, optimizer = loadParameters(model, optimizer, name= "sidewalk_curb_model")
 
 for epoch in range(NUM_EPOCHS):
 
@@ -68,8 +68,6 @@ for epoch in range(NUM_EPOCHS):
 	# Validation
 	num_correct_boundary = 0
 	num_correct_sidewalk = 0
-	num_correct_laneline = 0
-	num_correct_road = 0
 	num_correct = 0
 	num_pixels  = 0
 	loss_total  = 0
@@ -87,25 +85,21 @@ for epoch in range(NUM_EPOCHS):
 			# Score for each category
 			num_correct_boundary = ((preds == 1) & (target == 1)).sum()
 
-			num_correct_sidewalk = ((preds == 3) & (target == 3)).sum()
-			num_correct_laneline = ((preds == 2) & (target == 2)).sum()
-			num_correct_road = ((preds == 4) & (target == 4)).sum()
+			num_correct_sidewalk = ((preds == 2) & (target == 2)).sum()
 			# Assign class for each pixel
 
 			num_pixels  += torch.numel(preds)
 			num_correct += (preds == target).sum()
-			print(f'sidewalk: {num_correct_sidewalk/(target == 3).sum() * 100:.2f}%, ')
-			print(f'road: {num_correct_road/(target == 4).sum() * 100:.2f}%, ')
-			print(f'lane: {num_correct_laneline/(target == 2).sum() * 100:.2f}%, ')
+
+			print(f'sidewalk: {num_correct_sidewalk/(target == 2).sum() * 100:.2f}%, ')
 			print(f'curb: {num_correct_boundary/(target == 1).sum()*100:.2f}%, ')
-			#dice_score  += (2 * (preds * target).sum())/ ((preds + target).sum() + 1e-8)
 
 
 	print(f"Got {num_correct}/{num_pixels} with acc {num_correct/num_pixels*100:.2f}")
 	print(f"loss {loss_total/len(validation_loader)}")
 
 	if prev > loss_total/len(validation_loader):
-		saveParameters(model = model, optimizer = optimizer, name= "side_walk_bg")
+		saveParameters(model = model, optimizer = optimizer, name= "sidewalk_curb_model")
 		prev = loss_total/len(validation_loader)
 
 	model.train()
