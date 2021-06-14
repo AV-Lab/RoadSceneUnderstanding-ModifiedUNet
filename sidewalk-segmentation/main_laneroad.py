@@ -43,7 +43,7 @@ loss_fun  = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr= LEARNING_RATE)
 
 scalar = torch.cuda.amp.GradScaler()
-#model, optimizer = loadParameters(model, optimizer, name= "laneroad_model")
+model, optimizer = loadParameters(model, optimizer, name= "laneroad_model")
 
 for epoch in range(NUM_EPOCHS):
 

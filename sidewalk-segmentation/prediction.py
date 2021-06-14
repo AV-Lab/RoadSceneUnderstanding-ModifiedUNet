@@ -43,17 +43,13 @@ def doSegmentation(image):
 		preds = torch.argmax(preds, dim=1).squeeze(0).detach().cpu().numpy()
 
 	# Mask formulation
-	side_walk_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
-	curb_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
 	road_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
 	laneline_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
 	# Assign values
-	side_walk_mask[preds == 3] = [255, 255, 0]
-	curb_mask[preds == 1] = [255, 0, 0]
-	road_mask[preds == 4] = [0, 0, 255]
-	laneline_mask[preds == 2] = [0, 255, 0]
+	road_mask[preds == 2] = [0, 0, 255]
+	laneline_mask[preds == 1] = [0, 255, 0]
 
-	mask = side_walk_mask + curb_mask + road_mask + laneline_mask
+	mask = road_mask + laneline_mask
 
 	dtransform_out = dtransform(image = mask)
 
@@ -65,7 +61,7 @@ def doSegmentation(image):
 def loadModel():
 	model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
 
-	model = loadParameters(model = model, optimizer = None, name= 'side_walk_bg')
+	model = loadParameters(model = model, optimizer = None, name= 'laneroad_model')
 
 	return model.cuda()
 
@@ -182,5 +178,5 @@ cv2.imwrite('t.png',out)
 
 globalModel()
 
-doVideo(path=VIDEO_DIR+ 'test.mp4', output= SAVE_VIDEO_DIR +'test_out_2.mp4')
+doVideo(path=VIDEO_DIR+ 'project_video.mp4', output= SAVE_VIDEO_DIR +'project_video_2.mp4')
 
