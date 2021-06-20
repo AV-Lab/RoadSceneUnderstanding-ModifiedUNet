@@ -11,22 +11,22 @@ IMAGE_SIZE    = 320
 
 # Path Parameters
 TRAIN_IMG_DIR       = os.path.dirname(os.getcwd()) + "/data/training/images/"
-TRAIN_MASK_IMG_DIR 	= os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels/"
+TRAIN_MASK_IMG_DIR 	= os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels/"
 
 VAL_IMG_DIR        	= os.path.dirname(os.getcwd()) + "/data/validation/images/"
-VAL_MASK_IMG_DIR 	= os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels/"
+VAL_MASK_IMG_DIR 	= os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels/"
 
-TRAIN_MASK_SIDEWALK_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels_sidewalk/"
-TRAIN_MASK_ROAD_DIR  	 = os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels_road/"
-TRAIN_MASK_LANELINE_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels_laneline/"
-TRAIN_MASK_LANEPOINT_DIR = os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels_lanepoint/"
-TRAIN_MASK_BOUNDARY_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v2.0/labels_boundary/"
+TRAIN_MASK_SIDEWALK_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels_sidewalk/"
+TRAIN_MASK_ROAD_DIR  	 = os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels_road/"
+TRAIN_MASK_LANELINE_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels_laneline/"
+TRAIN_MASK_LANEPOINT_DIR = os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels_lanepoint/"
+TRAIN_MASK_BOUNDARY_DIR  = os.path.dirname(os.getcwd()) + "/data/training/v1.2/labels_boundary/"
 
-VAL_MASK_SIDEWALK_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_sidewalk/"
-VAL_MASK_ROAD_DIR  	 = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_road/"
-VAL_MASK_LANELINE_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_laneline/"
-VAL_MASK_LANEPOINT_DIR = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_lanepoint/"
-VAL_MASK_BOUNDARY_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v2.0/labels_boundary/"
+VAL_MASK_SIDEWALK_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels_sidewalk/"
+VAL_MASK_ROAD_DIR  	 = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels_road/"
+VAL_MASK_LANELINE_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels_laneline/"
+VAL_MASK_LANEPOINT_DIR = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels_lanepoint/"
+VAL_MASK_BOUNDARY_DIR  = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/labels_boundary/"
 
 VIDEO_DIR 				= "input videos/"
 
@@ -38,7 +38,7 @@ SAVE_IMAGE_DIR     = "output images/"
 # Model
 COLOR_CHANNEL = 3
 GRAY_CHANNEL  = 1
-N_CLASSES     = 5
+N_CLASSES     = 3
 
 # Saved Models
 
