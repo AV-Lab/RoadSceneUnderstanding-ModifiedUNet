@@ -9,14 +9,17 @@ from utils import (loadParameters)
 from parameters import *
 from models import UNET
 from albumentations.pytorch import ToTensorV2
-from moviepy.editor import VideoFileClip
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
+def cos(angle): return np.round(np.cos(np.deg2rad(angle)), decimals=5)
+def sin(angle): return np.round(np.sin(np.deg2rad(angle)), decimals=5)
 
 def globalModel():
-	global model
-	model = loadModel()
+	global model1, model2
+	model1, model2 = loadModel()
 
 def doSegmentation(image):
+
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 	height, width = image.shape[:2]
 
@@ -38,36 +41,55 @@ def doSegmentation(image):
 		# Prepare Image
 		pre_image = transform_out['image'].unsqueeze(0).cuda()
 
-		preds = model(pre_image)
-		preds = torch.softmax(preds, dim=1)
-		preds = torch.argmax(preds, dim=1).squeeze(0).detach().cpu().numpy()
+		preds1 = model1(pre_image)
+		preds2 = model2(pre_image)
+
+		preds1 = torch.softmax(preds1, dim=1)
+		preds1 = torch.argmax(preds1, dim=1).squeeze(0).detach().cpu().numpy()
+		preds2 = torch.softmax(preds2, dim=1)
+		preds2 = torch.argmax(preds2, dim=1).squeeze(0).detach().cpu().numpy()
 
 	# Mask formulation
-	side_walk_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
-	curb_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
-	road_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
-	laneline_mask = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
-	# Assign values
-	side_walk_mask[preds == 3] = [255, 255, 0]
-	curb_mask[preds == 1] = [255, 0, 0]
-	road_mask[preds == 4] = [0, 0, 255]
-	laneline_mask[preds == 2] = [0, 255, 0]
+	road_mask_beam = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	road_mask      = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	sidewalk_mask  = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	curb_maks      = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
+	laneline_mask  = np.zeros((pre_image.shape[2], pre_image.shape[3], 3))
 
-	mask = side_walk_mask + curb_mask + road_mask + laneline_mask
+	# Assign values
+	curb_maks[(preds2 == 1) & (preds1 ==0)]    = [125,0,125]
+	sidewalk_mask[(preds2 == 2) & (preds1 == 0)] = [125, 125, 0]
+	road_mask[preds1 == 2]     = [0, 0, 255]
+	laneline_mask[preds1 == 1] = [0, 255, 0]
+	road_mask_beam[preds1 == 1] = [255, 0, 0]
+	road_mask_beam[preds1 == 2] = [255, 0, 0]
+
+	center_point_x, center_point_y = road_mask.shape[1] // 2, road_mask.shape[0]
+
+	beam_mask = centerSignalsBeam(angles=np.array(range(-100, 100, 5)),
+								  image=road_mask_beam,
+								  beam_length=1,
+								  center=(center_point_x, center_point_y))
+
+	mask = road_mask + laneline_mask + beam_mask +sidewalk_mask + curb_maks
 
 	dtransform_out = dtransform(image = mask)
 
-	out = cv2.addWeighted(image,1,dtransform_out['image'],0.4, 0, dtype=cv2.CV_64F)
-	return cv2.cvtColor(out.astype('uint8'), cv2.COLOR_RGB2BGR)
+	out = cv2.addWeighted(image,0.7,dtransform_out['image'],0.3, 0, dtype=cv2.CV_64F)
+	img =  cv2.cvtColor(out.astype('uint8'), cv2.COLOR_RGB2BGR)
+
+	return img
 
 
 
 def loadModel():
-	model     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
+	model1     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
+	model2     = UNET(in_channels= COLOR_CHANNEL, out_channels= N_CLASSES)
 
-	model = loadParameters(model = model, optimizer = None, name= 'side_walk_bg')
+	model1 = loadParameters(model = model1, optimizer = None, name= 'laneroad_model')
+	model2 = loadParameters(model = model2, optimizer = None, name= 'sidewalk_curb_model')
 
-	return model.cuda()
+	return model1.cuda(), model2.cuda()
 
 def readImage(path):
 	image = cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
@@ -101,10 +123,50 @@ def doVideo(path, output):
 	white_output = output
 
 	clip1 = VideoFileClip(path)
-	white_clip = clip1.fl_image(doSegmentation) 
+	white_clip = clip1.fl_image(doSegmentation)
 	white_clip.write_videofile(white_output, audio=False)
-'''
 
+# This function draw beams to locate objects
+def centerSignalsBeam(angles, image, beam_length, center, thershold = 2):
+
+	out        = np.zeros(image.shape)
+	used_angle = np.array([thershold] * angles.shape[0])
+	x_point = []
+	y_point = []
+
+	for y in range(beam_length, center[1]):
+		av_angles = (used_angle > 0)
+		if av_angles.sum() == 0: break
+
+		x_points = y * sin(angles[av_angles])/cos(angles[av_angles])
+		x_points[np.abs(x_points) == np.inf] = 0
+		x_points = center[0] + x_points
+
+
+		indx_remove = []
+		for i, x in enumerate(x_points[(x_points < image.shape[1]) & (x_points > 0)]):
+
+			if image[center[1] - y, int(x), 0] == 0:
+				# Counter reachs 1, then the current state is object.
+				if used_angle[i] == 1:
+					indx_remove.append(i)
+					cv2.line(out, (int(x), center[1]-y), (center[0], center[1]), color=[255,255,0])
+
+				# Counter to ensure there is an object at the given angle.
+				else:
+					used_angle[i] -=1
+			# Update the threshold for incorrect mask.
+			elif image[int(x), center[1] - y, 0] == 0 and used_angle[i] > 0 and used_angle[i] < thershold :
+				used_angle[i] = thershold
+
+		# Remove lines that reached to after finding object
+		for j in reversed(indx_remove):
+			used_angle = np.delete(used_angle, j)
+			angles = np.delete(angles, j)
+
+	return out
+
+'''
 # Load Model
 model = loadModel()
 
@@ -112,7 +174,7 @@ model = loadModel()
 
 img_path_list = os.listdir(VAL_IMG_DIR)
 
-image_path = VAL_IMG_DIR + img_path_list[1450]
+image_path = VAL_IMG_DIR + img_path_list[255]
 print(image_path)
 image, width, height = readImage(image_path)
 #label= cv2.imread(VAL_MASK_IMG_DIR + img_path_list[19].replace('.jpg','.png'))
@@ -125,20 +187,16 @@ preds  = torch.softmax(preds, dim=1)
 preds  = torch.argmax(preds, dim = 1).squeeze(0).detach().cpu().numpy()
 
 # Mask formulation
-side_walk_mask = np.zeros((image.shape[1], image.shape[2], 3))
-curb_mask      = np.zeros((image.shape[1], image.shape[2], 3))
 road_mask      = np.zeros((image.shape[1], image.shape[2], 3))
-laneline_mask  = np.zeros((image.shape[1], image.shape[2], 3))
-print(preds)
+road_mask_beam = np.zeros((image.shape[1], image.shape[2], 3))
+lane_line_mask = np.zeros((image.shape[1], image.shape[2], 3))
+
 # Assign values
-side_walk_mask[preds == 3] 	=  [255,255,0]
-curb_mask[preds == 1] 		= [255,0,0]
-road_mask[preds == 4] 		= [0,0,255]
-laneline_mask[preds == 2] 	= [0, 255, 0]
+road_mask_beam[preds == 2] 	=  [255,0,0]
+road_mask_beam[preds == 1] 	=  [255,0,0]
+center_point_x, center_point_y = road_mask.shape[1]//2, road_mask.shape[0]
 
-mask = side_walk_mask + curb_mask + road_mask + laneline_mask
-
-addMask(image = image.permute(1,2,0).numpy(), mask = mask, width=height, height= width)
+beam_mask = centerSignalsBeam(angles=np.array(range(-100,100,5)), image = road_mask, beam_length= 1, center=(center_point_x, center_point_y))
 '''
 '''
 output_channel = pred.detach().cpu().numpy()
@@ -182,5 +240,4 @@ cv2.imwrite('t.png',out)
 
 globalModel()
 
-doVideo(path=VIDEO_DIR+ 'test.mp4', output= SAVE_VIDEO_DIR +'test_out_2.mp4')
-
+doVideo(path=VIDEO_DIR+ 'loss ang.mp4', output= SAVE_VIDEO_DIR +'los ang.mp4')

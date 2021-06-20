@@ -99,7 +99,7 @@ for epoch in range(NUM_EPOCHS):
 	print(f"loss {loss_total/len(validation_loader)}")
 
 	if prev > loss_total/len(validation_loader):
-		saveParameters(model = model, optimizer = optimizer, name= "sidewalk_curb_model")
+		saveParameters(model = model, optimizer = optimizer, name= "no")
 		prev = loss_total/len(validation_loader)
 
 	model.train()
