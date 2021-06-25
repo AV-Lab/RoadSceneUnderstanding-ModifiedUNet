@@ -73,6 +73,7 @@ def doSegmentation(image):
 
 	mask = road_mask + laneline_mask + beam_mask +sidewalk_mask + curb_maks
 
+
 	dtransform_out = dtransform(image = mask)
 
 	out = cv2.addWeighted(image,0.7,dtransform_out['image'],0.3, 0, dtype=cv2.CV_64F)
@@ -88,6 +89,7 @@ def loadModel():
 
 	model1 = loadParameters(model = model1, optimizer = None, name= 'laneroad_model')
 	model2 = loadParameters(model = model2, optimizer = None, name= 'sidewalk_curb_model')
+
 
 	return model1.cuda(), model2.cuda()
 

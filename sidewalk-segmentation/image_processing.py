@@ -179,6 +179,7 @@ def crosswalkExtractor(source, dist):
 
 
 # Sidewalk
+
 sidewalkExtractor(source= TRAIN_MASK_IMG_DIR, dist = TRAIN_MASK_SIDEWALK_DIR)
 sidewalkExtractor(source= VAL_MASK_IMG_DIR, dist = VAL_MASK_SIDEWALK_DIR)
 # Laneline

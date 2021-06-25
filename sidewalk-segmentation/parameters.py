@@ -51,6 +51,7 @@ VAL_MASK_STREET_SINK = os.path.dirname(os.getcwd()) + "/data/validation/v1.2/lab
 
 
 
+
 VIDEO_DIR 				= "input videos/"
 
 # Save Path
@@ -62,6 +63,7 @@ SAVE_IMAGE_DIR     = "output images/"
 COLOR_CHANNEL = 3
 GRAY_CHANNEL  = 1
 N_CLASSES     = 11
+
 
 # Saved Models
 
