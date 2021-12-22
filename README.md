@@ -18,11 +18,11 @@ This project contains two experiments for semantic segmentation using a Modified
 - `imageprocessing.py`: This file generates semantic segmentation masks given a label segmentation image. The masks are provided in separated folders based on the class name.
 
 ## Experiment (1): One-Class Semantic Segmentation.
-In this experiment, a semantic segmentation for one class is done by approaching cars as a target class. The training is only applied on 5K~8K images and 1.2~1.5K images as a validation dataset. The pixel accuracy reachs to 87%. The trained model is applied on a video recorded in Dubai, UAE. 
+In this experiment, a semantic segmentation for one class is done by approaching cars as a target class. The training is only applied on 5K~8K images and 1.2~1.5K images as a validation dataset. The experiement code is provided in `vehicle-segmentation` folder. The pixel accuracy reachs to 87%. The trained model is applied on a video recorded in Dubai, UAE.
 ![alt text](https://user-images.githubusercontent.com/20774864/121232074-41417c80-c8a2-11eb-9c91-f891974ea69f.png)
 
 ## Experiment (2): Multi-Classes Semantic Segmentation.
-In this experiment, we consider five classes: road, sidewalk, curb, crosswalk, and lane line.  The accuracy reaches 95% pixel accuracy. 
+In this experiment, we consider five classes: road, sidewalk, curb, crosswalk, and lane line. The experiement code is provided in `sidewalk-segmentation` folder. The accuracy reaches 95% pixel accuracy. 
 ![alt text](https://user-images.githubusercontent.com/20774864/147135092-ecad45f3-a57a-4abe-a918-adecd7c193c2.PNG)
 
 
